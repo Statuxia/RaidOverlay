@@ -1,5 +1,6 @@
 import io
 import os
+import webbrowser
 from ctypes import windll
 from tkinter import *
 from urllib.request import urlopen
@@ -13,7 +14,6 @@ class Overlay(Tk):
     def __init__(self):
         super().__init__()
 
-        self.overlayheight = 160
         self.way = None
         self.names = None
         self.names_mem = None
@@ -47,7 +47,7 @@ class Overlay(Tk):
         self.attributes("-topmost", True)
         self.config(bg="#fffff1")
         self.resizable(width=False, height=False)
-        self.title("RaidOverlay v0.1")
+        self.title("RaidOverlay v0.2")
 
         try:
             self.iconbitmap("icon.ico")
@@ -71,12 +71,17 @@ class Overlay(Tk):
         self.after(10, self.overlay)
 
         self.after(10, self.set_appwindow)
+
+        self.bind("<Enter>", self.on_enter_overlay)
+        self.bind("<Leave>", self.on_leave_overlay)
+
         self.mainloop()
 
     def overlay(self):
         with open(os.getenv("APPDATA") + "\.vimeworld\minigames\logs\latest.log", "r", encoding='utf-8') as file:
             file = file.readlines()[-1][39:].strip()
-            if self.names != file.split(", ") and not bool(re.search('[а-яА-Я\[<.!:;/#]', file)):
+            if self.names != file.split(", ") and not bool(re.search('[а-яА-Я\[<.!:;/#]', file)) and file.split(
+                    ", ") != [""]:
                 self.names = file.split(", ")
                 del file
 
@@ -107,11 +112,12 @@ class Overlay(Tk):
                                                       text=f"0/{len(self.names)}",
                                                       fg="snow", font=("TkDefaultFont", 10, "bold"))
                 self.changePositionFrame.text.pack(side=LEFT)
-
+                self.overlayheight = 0
                 for j in range(0, len(self.names), 6):
                     self.images.append([])
                     self.overlayFrame.line = Frame(self.overlayFrame, width=42 * 6, height=60, bg="#fffff1")
                     self.overlayFrame.line.pack(side=TOP)
+                    self.overlayheight += 43
 
                     for i in range(6):
                         if j + i == len(self.names):
@@ -119,7 +125,7 @@ class Overlay(Tk):
                         self.changePositionFrame.text.config(text=f"{j + i + 1}/{len(self.names)}")
                         self.update()
                         self.update_idletasks()
-                        self.overlayheight += 60
+
                         self.overlayFrame.config(height=self.overlayheight)
                         image_byt = urlopen(f"https://skin.vimeworld.ru/head/{self.names[j + i]}/35.png").read()
                         image_b64 = Image.open(io.BytesIO(image_byt))
@@ -183,6 +189,13 @@ class Overlay(Tk):
         self.state('normal')
 
     # Player menu
+    def on_enter_overlay(self, e):
+        self.attributes("-alpha", 1)
+
+    def on_leave_overlay(self, e):
+        if e.widget.winfo_parent() == "" or "!toplevel" not in e.widget.winfo_name() or "!toplevel" not in e.widget.winfo_parent():
+            self.attributes("-alpha", 0.3)
+
     def on_enter(self, e):
         if "!toplevel" in e.widget.winfo_name() or "!toplevel" in e.widget.winfo_parent():
             return
@@ -201,7 +214,7 @@ class Overlay(Tk):
             self.menu.attributes("-topmost", True)
             self.menu.resizable(width=False, height=False)
             self.config(bg="gray13")
-            self.menu.frame = Frame(self.menu, width=200, height=220, bg="gray13")
+            self.menu.frame = Frame(self.menu, width=210, height=220, bg="gray13")
             self.menu.frame.pack()
 
             label = e.widget.winfo_name()
@@ -209,19 +222,24 @@ class Overlay(Tk):
             player = 0 if label == "!label" else int(label.split("!label")[-1]) - 1
             player = player if parent.split(".!frame")[-1] == "" else player + 6 * (
                     int(parent.split(".!frame")[-1]) - 1)
+            image = self.images[player // 6][player % 6]
 
             user_rank = self.rank.get(self.names_mem[player].get("rank"))
             user = self.names_mem[player]
             guild = user.get("guild")
 
-            self.menu.user = Frame(self.menu.frame, width=180, height=22, bg=user_rank.get("color"), bd=2)
+            self.menu.user = Frame(self.menu.frame, width=190, height=22, bg=user_rank.get("color"), bd=2)
             self.menu.user.pack(side=TOP, padx=5, pady=5)
             # NICKNAME FRAME
-            self.menu.user_frame = Frame(self.menu.user, width=180, height=22, bg="gray13")
+            self.menu.user_frame = Frame(self.menu.user, width=190, height=70, bg="gray13")
             self.menu.user_frame.pack_propagate(False)
             self.menu.user_frame.pack(side=TOP)
-            self.menu.user_frame_center = Frame(self.menu.user_frame, width=180, height=22, bg="gray13")
+
+            self.menu.user_frame_center = Frame(self.menu.user_frame, width=190, height=70, bg="gray13")
             self.menu.user_frame_center.pack(side=TOP)
+            self.menu.user_frame.image = Label(self.menu.user_frame_center, image=image, bg="gray13",
+                                               fg=user_rank.get("color"))
+            self.menu.user_frame.image.pack(side=TOP, pady=3)
             self.menu.user_frame.rank = Label(self.menu.user_frame_center, bg="gray13", text=user_rank.get("translate"),
                                               fg=user_rank.get("color"), font=("TkDefaultFont", 10, "bold"))
             self.menu.user_frame.rank.pack(side=LEFT, pady=3)
@@ -230,7 +248,7 @@ class Overlay(Tk):
             self.menu.user_frame.nickname.pack(side=LEFT, pady=3)
 
             # ID FRAME
-            self.menu.user_id_frame = Frame(self.menu.user, width=180, height=22, bg="gray13")
+            self.menu.user_id_frame = Frame(self.menu.user, width=190, height=22, bg="gray13")
             self.menu.user_id_frame.pack_propagate(False)
             self.menu.user_id_frame.pack(side=TOP)
             self.menu.user_id_frame.id = Label(self.menu.user_id_frame, bg="gray13", text=f'ID: {user.get("id")}',
@@ -238,7 +256,7 @@ class Overlay(Tk):
             self.menu.user_id_frame.id.pack(side=LEFT, pady=3)
 
             # LEVEL
-            self.menu.user_level_frame = Frame(self.menu.user, width=180, height=22, bg="gray13")
+            self.menu.user_level_frame = Frame(self.menu.user, width=190, height=22, bg="gray13")
             self.menu.user_level_frame.pack_propagate(False)
             self.menu.user_level_frame.pack()
             self.menu.user_level_frame.level = Label(self.menu.user_level_frame, bg="gray13",
@@ -247,7 +265,7 @@ class Overlay(Tk):
             self.menu.user_level_frame.level.pack(side=LEFT, pady=3)
 
             # PLAYED
-            self.menu.user_played_time_frame = Frame(self.menu.user, width=180, height=22, bg="gray13")
+            self.menu.user_played_time_frame = Frame(self.menu.user, width=190, height=22, bg="gray13")
             self.menu.user_played_time_frame.pack_propagate(False)
             self.menu.user_played_time_frame.pack()
             self.menu.user_played_time_frame.playedSeconds = Label(self.menu.user_played_time_frame, bg="gray13",
@@ -256,12 +274,12 @@ class Overlay(Tk):
             self.menu.user_played_time_frame.playedSeconds.pack(side=LEFT, pady=3)
 
             if user.get("guild") is not None:
-                self.menu.guild = Frame(self.menu.frame, width=180, height=22,
+                self.menu.guild = Frame(self.menu.frame, width=190, height=22,
                                         bg=self.colormap.get(guild.get("color")[1:]), bd=2)
                 self.menu.guild.pack(side=TOP, padx=5, pady=5)
 
                 # GUILD FRAME
-                self.menu.guild_frame = Frame(self.menu.guild, width=180, height=22, bg="gray13")
+                self.menu.guild_frame = Frame(self.menu.guild, width=190, height=22, bg="gray13")
                 self.menu.guild_frame.pack_propagate(False)
                 self.menu.guild_frame.pack(side=TOP)
 
@@ -275,7 +293,7 @@ class Overlay(Tk):
                 self.menu.guild_frame.name.pack(side=TOP, pady=3)
 
                 # ID FRAME
-                self.menu.guild_id_frame = Frame(self.menu.guild, width=180, height=22, bg="gray13")
+                self.menu.guild_id_frame = Frame(self.menu.guild, width=190, height=22, bg="gray13")
                 self.menu.guild_id_frame.pack_propagate(False)
                 self.menu.guild_id_frame.pack(side=TOP)
                 self.menu.guild_id_frame.id = Label(self.menu.guild_id_frame, bg="gray13",
@@ -284,7 +302,7 @@ class Overlay(Tk):
                 self.menu.guild_id_frame.id.pack(side=LEFT, pady=3)
 
                 # LEVEL
-                self.menu.guild_level_frame = Frame(self.menu.guild, width=180, height=22, bg="gray13")
+                self.menu.guild_level_frame = Frame(self.menu.guild, width=190, height=22, bg="gray13")
                 self.menu.guild_level_frame.pack_propagate(False)
                 self.menu.guild_level_frame.pack()
                 self.menu.guild_level_frame.level = Label(self.menu.guild_level_frame, bg="gray13",
@@ -296,6 +314,7 @@ class Overlay(Tk):
             self.menu.geometry("+%s+%s" % (widget_x, widget_y))
             self.menu.bind("<Enter>", self.on_enter)
             self.menu.bind("<Leave>", self.on_leave)
+            self.menu.bind("<Enter>", self.on_enter_overlay)
 
     def on_leave(self, e):
         if "label" not in e.widget.winfo_name() and "!frame" not in e.widget.winfo_parent():
@@ -303,9 +322,9 @@ class Overlay(Tk):
                 if isinstance(e.widget, Toplevel):
                     e.widget.destroy()
                     self.way = None
+                    self.attributes("-alpha", 0.3)
 
     # Exit part :)
-
     def exit(self):
         self.destroy()
 
