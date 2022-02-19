@@ -18,9 +18,9 @@
 
 > Скачать через github: https://github.com/Statuxia/RaidOverlay/raw/main/RaidOverlay.zip
 
-> Скачать через MEGA: https://mega.nz/file/RZxkBI5C#W2pIKYj_OdjcRhNMr_C5CA_Qa9H9cbPy-hm7DTEARuE
+> Скачать через MEGA: https://mega.nz/file/MNowFKRT#rMaIdEuxtS06olrjdXbeWSz6FXygqUjoy1L82gmyZiQ
 
-> VT: https://www.virustotal.com/gui/file/3057c40ded1395c0b9160d927bfaa2485f61c9b966f80087b6d23e4892592e51?nocache=1
+> VT: https://www.virustotal.com/gui/file/5a5330866c98caebb63b96e1834ebaafb7c0c70b87dce2aa536ef7ec4193153a?nocache=1
 
 *p.s.*
 
